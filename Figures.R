@@ -6,10 +6,19 @@
 #   by Christopher M. Moore, Sam A. Catella, and Karen C. Abbott
 #
 #~~ DETAILS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#
+#   This file reproduces all of the figures from the above paper, except for
+#   Figure 4, which is long, so I put it in its own file.  There are a few
+#   things to note:
+#      -fig.wd sets where to print the files (.pdf and one .png) if left to NA
+#       then figure is not printed and just displayed in the graphics device
+#      -set data.wd to where the data are for Figures 3, 5, 6, 7
+#         -Figure 6 reads .Rdata files, so place data in a folder called Fig6
+#          within the data.wd directory.  The reason is that I ran a numerical
+#          simulation for each of the betas in the paper, 0.1, 0.01, and 0.001.
 #
 #~~ VALUE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#
+#   .pdfs and one .png (Figure 3) if fig.wd != NA  Otherwise, figures produced
+#   in graphics device
 #
 #~~ CONTENTS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   0. Load libraries and set directories
@@ -24,6 +33,7 @@
 ####5###10###15###20###25###30###35###40###45###50###55###60###65###70###75###80
 # 0. Load libraries and set directories
 	data.wd <- "~/Dropbox/MutPopDyn/Paper_BirthDeathMutualism/Data"
+		data.wd.fig6 <- paste0(data.wd, "/Fig7")
 	fig.wd <- NA
 	library(package = "viridis") # R package version 0.3.4
 	library(package = "plot3D") # R package version 1.1
@@ -140,7 +150,7 @@
 				eta.by.eq[i, ] <- c(sim.results[[i]]$parameters["eta"], sim.results[[i]]$n.equilibria, sim.results[[i]]$parameters["beta"])
 			}
 	# 3.3. Plot eta == theta by beta
-	if (!is.na(fig.wd) == T) { png(paste0(working.dir, "/NumEquilibria_OnePlot.png"), width = 4, height = 4, units = "in", res = 300, pointsize = 10) }
+	if (!is.na(fig.wd) == T) { png(paste0(fig.wd, "/NumEquilibria_OnePlot.png"), width = 4, height = 4, units = "in", res = 300, pointsize = 10) }
 			u.etas <- unique(eta.by.eq[,1])
 			u.betas <- unique(eta.by.eq[,3])
 			etXbet <- matrix(data = NA, nrow = length(u.etas), ncol = length(u.betas))
@@ -281,14 +291,12 @@
 	if (!is.na(fig.wd) == T) { dev.off() }
 
 # 6. Figure 6: eta versus theta versus beta
-
-	# define working directory	
-		files <- list.files(path = paste0(data.wd, "/ETBData"), pattern = ".Rdata")
-
+	# define working directory
+		files <- list.files(path = paste0(data.wd.fig6), pattern = ".Rdata")
 	# import all .Rdata in the directory and combine as a single list
 		res <- vector(mode = "list")
 		for (i in 1:length(files)) {
-			load(paste0(paste0(data.wd, "/ETBData"), paste0("/",files[i])))
+			load(paste0(paste0(data.wd, "/ETBData/RealData"), paste0("/",files[i])))
 			res <- append(res, sim.results)
 		}
 
@@ -319,7 +327,11 @@
 		for (i in 1:l.res){
 			etXbet[dims[i, 1], dims[i, 2], dims[i, 3]] <- eta.theta.beta.neq[,4][i]
 		}
-
+	cls <- list(length = length(u.betas))
+	for (i in 1:length(u.betas)) {
+		cl <- contourLines(x = u.etas, y = u.thetas, z = etXbet[,,i], nlevels = 1)
+		cls[i] <- cl
+	}
 	# print pdf
 	if (!is.na(fig.wd) == T) { pdf(paste0(fig.wd, "/AssymEtaTheta.pdf"), width = 5, height = 5) }
 		par(mfrow = c(1, 1), mar = c(2.1,2.1,1,1), oma = c(1,1,0,0))
@@ -337,25 +349,21 @@
 # 7. Figure 7: saturating mutualism benefit
 	# 7.1. Load data and package(s)
 		load(paste0(data.wd, "/MutBenSat.Rdata"))
-	
 	# 7.2. Generate equilibria, equilibria classifications, and the eta.by.eq (matrix with eta, equilibria, and beta columns) data
 		l.res <- length(sim.results)
 		equilibria <- vector(mode = "numeric", length = l.res)
 			for(i in 1:l.res){
 				equilibria[i] <- sim.results[[i]]$n.equilibria
 			}
-	
 		eta.by.eq <- matrix(data = NA, nrow = l.res, ncol = 3)
 		colnames(eta.by.eq) <- c("eta", "n.equilibria", "beta")
 			for(i in 1:l.res){
 				eta.by.eq[i, ] <- c(sim.results[[i]]$parameters["eta"], sim.results[[i]]$n.equilibria, sim.results[[i]]$parameters["beta"])
-			}
-	
-	# 3. Clean data 
+			}	
+	# 7.3. Clean data 
 		eta.by.eq.5 <- if(any(eta.by.eq[,2] > 5)) {eta.by.eq[-which(eta.by.eq[,2] > 5), ]} else {eta.by.eq.5 <- eta.by.eq}
-	
-	# 5. plot location of the stable equilibria series
-		# 5.1. Extract data
+	# 7.4. plot location of the stable equilibria series
+		# 7.4.1. Extract data
 			mut.int.eq <- matrix(data = NA, nrow = l.res, ncol = 4)
 				for(i in 1:l.res) {
 					mut.int.eq[i,c(1,2)] <- sim.results[[i]]$analysis[matrix(data = c(3,1,2,2), ncol = 2, byrow = T)]
@@ -364,9 +372,8 @@
 					} else {
 						mut.int.eq[i,c(3,4)] <- NA
 					}
-			}
-	
-		# 5.2. Generate data
+				}
+		# 7.4.2. Generate data
 			eqs <- cbind(eta.by.eq, mut.int.eq)
 			colnames(eqs) <- c(colnames(eqs[,1:3]), "no.mut.x", "no.mut.y", "mut.x", "mut.y")
 			eqs <- eqs[which(eqs[,2] < 6),]
@@ -378,54 +385,50 @@
 			eqs <- cbind(eqs[,1:7], no.mut.dist, mut.dist)
 			mut.ben <- eqs[,9] - eqs[,8]
 			eqs <- cbind(eqs, mut.ben)
-		# 5.3. Generate data
-		unique.etas <- unique(eqs[,1])
-		unique.betas <- unique(eqs[,3])
-		l.eqs <- nrow(eqs)
-		no.mut.dist.mat <- matrix(data = NA, nrow = l.eqs)
-	
-		eta.seq <- 10^seq(-2, 2, length.out = 55)
-		beta.seq <- 10^seq(-2, 2, length.out = 55)
-		no.mut.dist.mat <- matrix(data = NA, nrow = 55, ncol = 55, dimnames = list(eta.seq, beta.seq))
-		for (i in 1:55){
-			for (j in 1:55) {
-				if (any(eta.seq[i] == eqs[,1]) == T) {
-					if (any(beta.seq[j] == eqs[,3]) == T) {
-						if (any(eta.seq[i] == eqs[,1] & beta.seq[j] == eqs[,3])) {
-						no.mut.dist.mat[i, j] <- eqs[which(eta.seq[i] == eqs[,1] & beta.seq[j] == eqs[,3]), 8]
+		# 7.4.3. Generate data
+			unique.etas <- unique(eqs[,1])
+			unique.betas <- unique(eqs[,3])
+			l.unique.betas <- length(unique.betas)
+			l.eqs <- nrow(eqs)
+			no.mut.dist.mat <- matrix(data = NA, nrow = l.eqs)
+			eta.seq <- 10^seq(-2, 2, length.out = l.unique.etas)
+			beta.seq <- 10^seq(-2, 2, length.out = l.unique.betas)
+			no.mut.dist.mat <- matrix(data = NA, nrow = 55, ncol = 55, dimnames = list(eta.seq, beta.seq))
+			for (i in 1:55){
+				for (j in 1:55) {
+					if (any(eta.seq[i] == eqs[,1]) == T) {
+						if (any(beta.seq[j] == eqs[,3]) == T) {
+							if (any(eta.seq[i] == eqs[,1] & beta.seq[j] == eqs[,3])) {
+							no.mut.dist.mat[i, j] <- eqs[which(eta.seq[i] == eqs[,1] & beta.seq[j] == eqs[,3]), 8]
+							}
 						}
 					}
 				}
 			}
-		}
-	
-		mut.dist.mat <- matrix(data = NA, nrow = 55, ncol = 55, dimnames = list(eta.seq, beta.seq))
-		for (i in 1:55){
-			for (j in 1:55) {
-				if (any(eta.seq[i] == eqs[,1]) == T) {
-					if (any(beta.seq[j] == eqs[,3]) == T) {
-						if (any(eta.seq[i] == eqs[,1] & beta.seq[j] == eqs[,3])) {
-						mut.dist.mat[i, j] <- eqs[which(eta.seq[i] == eqs[,1] & beta.seq[j] == eqs[,3]), 9]
+			mut.dist.mat <- matrix(data = NA, nrow = 55, ncol = 55, dimnames = list(eta.seq, beta.seq))
+			for (i in 1:55){
+				for (j in 1:55) {
+					if (any(eta.seq[i] == eqs[,1]) == T) {
+						if (any(beta.seq[j] == eqs[,3]) == T) {
+							if (any(eta.seq[i] == eqs[,1] & beta.seq[j] == eqs[,3])) {
+							mut.dist.mat[i, j] <- eqs[which(eta.seq[i] == eqs[,1] & beta.seq[j] == eqs[,3]), 9]
+							}
 						}
 					}
 				}
 			}
-		}
-	
-		mut.ben.dist.mat <- matrix(data = NA, nrow = 55, ncol = 55, dimnames = list(eta.seq, beta.seq))
-		for (i in 1:55){
-			for (j in 1:55) {
-				if (any(eta.seq[i] == eqs[,1]) == T) {
-					if (any(beta.seq[j] == eqs[,3]) == T) {
-						if (any(eta.seq[i] == eqs[,1] & beta.seq[j] == eqs[,3])) {
-						mut.ben.dist.mat[i, j] <- eqs[which(eta.seq[i] == eqs[,1] & beta.seq[j] == eqs[,3]), 10]
+			mut.ben.dist.mat <- matrix(data = NA, nrow = 55, ncol = 55, dimnames = list(eta.seq, beta.seq))
+			for (i in 1:55){
+				for (j in 1:55) {
+					if (any(eta.seq[i] == eqs[,1]) == T) {
+						if (any(beta.seq[j] == eqs[,3]) == T) {
+							if (any(eta.seq[i] == eqs[,1] & beta.seq[j] == eqs[,3])) {
+							mut.ben.dist.mat[i, j] <- eqs[which(eta.seq[i] == eqs[,1] & beta.seq[j] == eqs[,3]), 10]
+							}
 						}
 					}
 				}
-			}
-		}
-	
-	
+			}	
 			zeros <- which(mut.ben.dist.mat ==0, arr.ind = T)
 			mut.ben.dist.mat[zeros[,1], zeros[,2]] <- NA
 		if (!is.na(fig.wd) == T) { pdf(paste0(fig.wd, "/MutBen3D_Sat.pdf"), width = 8, height = 4, pointsize = 12) }
@@ -437,7 +440,7 @@
 			z.axis <- pretty(seq(from = -5, to = max(log10(mut.dist.mat), na.rm = T),))
 			min.z <- min(z.axis); max.z <- max(z.axis)
 			pmat1 <- persp3D(x = log10(eta.seq), y =  log10(beta.seq), z = log10(no.mut.dist.mat), phi = 7.5, theta = 40, contour = list(lwd = 0.5), zlim = c(min.z, max.z), col = jet2.col(100, 0.35),  colkey = F, xlab = "", ylab = "", zlab = "", border = "#00000018", ticktype = "detailed", bty = "b", box = TRUE)
-	
+
 			x.axis <- seq(from = -2, to = 2, by = 1)
 			min.x <- min(x.axis); max.x <- max(x.axis)
 			y.axis <- seq(from = -2, to = 2, by = 1)
@@ -445,7 +448,7 @@
 			z.axis <- pretty(seq(from = -5, to = max(log10(mut.dist.mat), na.rm = T),))
 			min.z <- min(z.axis); max.z <- max(z.axis)
 			pmat2 <- persp3D(x = log10(eta.seq), y =  log10(beta.seq), z = log10(mut.dist.mat), phi = 7.5, theta = 40, contour = list(lwd = 0.75), zlim = c(min.z, max.z), col = jet2.col(100, 0.35), colkey = F, xlab = "", ylab = "", zlab = "", border = "#00000018", ticktype = "detailed")
-	
+
 			x.axis <- seq(from = -2, to = 2, by = 1)
 			min.x <- min(x.axis); max.x <- max(x.axis)
 			y.axis <- seq(from = -2, to = 2, by = 1)
