@@ -27,8 +27,6 @@
 	fig.wd <- NA
 	library(package = "viridis") # R package version 0.3.4
 	library(package = "plot3D") # R package version 1.1
-	# library(package = "deSolve") # R package version 1.14
-	# library(package = "rootSolve") # R-package version 1.6
 	library(package = "rgl") # R package version 0.97.0
 
 # 1. Figure 1: etas and theta values
@@ -171,7 +169,6 @@
 
 # 5. Figure 5: linear mutaulism benefit
 	# 5.1. Load data and package(s)
-		working.dir <- "~/Dropbox/MutPopDyn/Paper_BirthDeathMutualism"
 		load(paste0(data.wd, "/MutBen.Rdata"))
 	# 5.2. Generate equilibria, equilibria classifications, and the eta.by.eq (matrix with eta, equilibria, and beta columns) data
 		l.res <- length(sim.results)
@@ -256,7 +253,7 @@
 			}
 		}
 
-	if (!is.na(fig.wd) == T) { pdf(paste0("~/Dropbox/MutPopDyn/Paper_BirthDeathMutualism/Figures/MutBen3D.pdf"), width = 8, height = 4, pointsize = 12) }
+	if (!is.na(fig.wd) == T) { pdf(paste0(fig.wd, "/MutBen3D.pdf"), width = 8, height = 4, pointsize = 12) }
 		par(mfrow = c(1, 3), mar = c(1.5, 1.5, 0, 0), oma = c(0, 0, 0,0))
 		x.axis <- seq(from = -2, to = 2, by = 1)
 		min.x <- min(x.axis); max.x <- max(x.axis)
@@ -283,7 +280,7 @@
 		pmat3 <- persp3D(x = log10(eta.seq), y =  log10(beta.seq), z = log10(mut.ben.dist.mat), phi = 7.5, theta = 40, contour = list(lwd = 0.75), zlim = c(min.z, max.z), col = jet2.col(100, 0.35), colkey = F, xlab = "", ylab = "", zlab = "", border = "#00000018", ticktype = "detailed")
 	if (!is.na(fig.wd) == T) { dev.off() }
 
-	# 6. Figure 6: eta versus theta versus beta
+# 6. Figure 6: eta versus theta versus beta
 
 	# define working directory	
 		files <- list.files(path = paste0(data.wd, "/ETBData"), pattern = ".Rdata")
@@ -291,7 +288,7 @@
 	# import all .Rdata in the directory and combine as a single list
 		res <- vector(mode = "list")
 		for (i in 1:length(files)) {
-			load(paste0(paste0(working.dir, "/Data/ETBData"), paste0("/",files[i])))
+			load(paste0(paste0(data.wd, "/ETBData"), paste0("/",files[i])))
 			res <- append(res, sim.results)
 		}
 
@@ -324,7 +321,7 @@
 		}
 
 	# print pdf
-	if (!is.na(fig.wd) == T) { pdf(paste0(working.dir, "/Figures/AssymEtaTheta.pdf"), width = 5, height = 5) }
+	if (!is.na(fig.wd) == T) { pdf(paste0(fig.wd, "/AssymEtaTheta.pdf"), width = 5, height = 5) }
 		par(mfrow = c(1, 1), mar = c(2.1,2.1,1,1), oma = c(1,1,0,0))
 		plot(NA, type = "n", log = "xy", xlim = c(0.01, 100), ylim = c(0.01, 100), xaxs = "i", yaxs = "i", las = 1, ann = F, xaxt = "n", yaxt = "n")
 		polygon(x = c(0.01, 0.01, 100, 100, 1, 1), y = c(1, 100, 100, 0.01, 0.01, 1), col = "black", border = F)		
@@ -431,7 +428,7 @@
 	
 			zeros <- which(mut.ben.dist.mat ==0, arr.ind = T)
 			mut.ben.dist.mat[zeros[,1], zeros[,2]] <- NA
-		if (!is.na(fig.wd) == T) { pdf(paste0("~/Dropbox/MutPopDyn/Paper_BirthDeathMutualism/Figures/MutBen3D_Sat.pdf"), width = 8, height = 4, pointsize = 12) }
+		if (!is.na(fig.wd) == T) { pdf(paste0(fig.wd, "/MutBen3D_Sat.pdf"), width = 8, height = 4, pointsize = 12) }
 			par(mfrow = c(1, 3), mar = c(1.5, 1.5, 0, 0), oma = c(0, 0, 0,0))
 			x.axis <- seq(from = -2, to = 2, by = 1)
 			min.x <- min(x.axis); max.x <- max(x.axis)
