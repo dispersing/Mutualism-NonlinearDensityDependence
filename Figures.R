@@ -6,9 +6,8 @@
 #   by Christopher M. Moore, Sam A. Catella, and Karen C. Abbott
 #
 #~~ DETAILS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#   This file reproduces all of the figures from the above paper, except for
-#   Figure 4, which is long, so I put it in its own file.  There are a few
-#   things to note:
+#   This file reproduces all of the figures from the above paper.  There are a
+#   few things to note:
 #      -fig.wd sets where to print the files (.pdf and one .png) if left to NA
 #       then figure is not printed and just displayed in the graphics device
 #      -set data.wd to where the data are for Figures 3, 5, 6, 7
@@ -25,7 +24,7 @@
 #   1. Figure 1: etas and theta values
 #   2. Figure 2: birth and death matrix
 #   3. Figure 3: eta = theta by beta
-#   4. ***Figure 4: phase planes*** not shown
+#   4. Figure 4: phase planes
 #   5. Figure 5: linear mutaulism benefit
 #   6. Figure 6: eta versus theta versus beta
 #   7. Figure 7: saturating mutualism benefit
@@ -175,7 +174,253 @@
 			axis(2, at = c(0.01, 0.1, 1, 10, 100), labels = c(0.01, 0.1, 1, 10, 100), las = 1)
 		if (!is.na(fig.wd) == T) { dev.off() }
 
-# 4. ***Figure 4: phase planes*** not shown
+# 4. Figure 4: phase planes
+	# 1. Functions
+		# 1.1. Nullclines for no mutaulism
+			nomut.nc <- function(model, mut.parm, x.lim, y.lim, parameters = NULL, colour = c("#CC000077", "#0000CC77"), lwd = 2, lty = 1, points = 100)
+				{	
+				parameters[[mut.parm]] <- 0
+				null.clines <- nc(model = model , x.lim = x.lim , y.lim = y.lim , parameters = parameters , points = points , lwd = lwd, lty = lty, add = T , col = colour )
+				}
+		# 1.2. Nullclines with mutaulism
+			nc <- function (model, x.lim, y.lim, parameters = NULL, points = 101, colour = c("#CC0000", "#0000CC"), add = TRUE, lwd = 2, lty = "F6", verbose = F) 
+			{
+				if (parameters[["eta"]]%%1 != 0 | parameters[["theta"]]%%1 != 0) {
+					x.lim[1] <- 0
+					y.lim[1] <- 0
+					abline(h = 0, v = 0, col = colour, lwd = lwd, lty = lty)
+				}
+			    x <- seq(from = x.lim[1], to = x.lim[2], length = points)
+			    y <- seq(from = y.lim[1], to = y.lim[2], length = points)
+			    dx <- matrix(0, ncol = points, nrow = points)
+			    dy <- matrix(0, ncol = points, nrow = points)
+			        for (i in 1:length(x)) {
+			            for (j in 1:length(y)) {
+			                df <- model(t = 0, y = c(x = x[i], y = y[j]), parameters = parameters)
+			                dx[i, j] <- df[[1]][1]
+			                dy[i, j] <- df[[1]][2]
+			            }
+			        }
+			        contour(x, y, dx, levels = 0, add = add, col = colour[1], 
+			            drawlabels = FALSE, lwd = lwd, lty = lty)
+			        contour(x, y, dy, levels = 0, add = TRUE, col = colour[2], 
+			            drawlabels = FALSE, lwd = lwd, lty = lty)
+				output <- list()
+			    output$colour <- colour
+			    output$deriv <- deriv
+				output$dx <- dx
+			    output$dy <- dy
+			    output$parameters <- parameters
+			    output$points <- points
+			    output$system <- system
+			    output$x.lim <- x.lim
+			    output$y.lim <- y.lim
+			    output$x <- x
+			    output$y <- y
+			    if (verbose == T) {
+			    	return(output)
+			    	}
+			}
+	
+	# 2. Plot preparation
+		bd <- function(t, y, parameters) {
+			with(as.list(c(y, parameters)),{
+				  dx = (b - d - mu*(x^(eta)) - nu*(x^(eta)) + beta*y)*x
+				  dy = (b - d - mu*(y^(eta)) - nu*(y^(eta)) + beta*x)*y
+			list(c(dx, dy))})}
+	
+			if (!is.na(fig.wd) == T) { pdf(paste0(fig.wd, "/PhasePlanes.pdf"), width = 6, height = 5) }
+			par(mfrow = c(2, 3), mar = c(4, 0.2, 0.2, 0.2), oma = c(0, 3, 3, 2))
+	
+	# 3. Plots
+		# 3.1. Trivial solution
+			plot.pars <- list(b = 5, d = 1, mu = 1, nu = 1, eta = 0, theta = 0, beta = 0)
+			lims <- c(0, 10)
+			plot(x = 0, type = "n", xlim = lims, ylim = lims, xaxt = "n", yaxt = "n", ann  = F)
+			abline(v = 0, h = 0, col = rev(c("#CC000077", "#0000CC77")), lwd = 1)
+			abline(v = 0, h = 0, col = rev(c("#CC0000", "#0000CC")), lty = "F3", lwd = 1.25)
+			arrows(3, 3, 6, 3, col = "#CC0000", lwd = 2, length = 0.05)
+			arrows(3, 3, 3, 6, col = "#0000CC", lwd = 2, length = 0.05)
+			arrows(3, 3, 5.5, 5.5, col = "#000000", lwd = 2, length = 0.05)
+			axis(2, at = 0, labels = 0, las = 1, tick = F, line = -0.6)
+			axis(2, at = 0, labels = F, tck = -0.02)
+			axis(1, at = 0, labels = F, tck = -0.02)
+			axis(1, at = 0, labels = 0, las = 1, tick = F, line = -0.7)
+			points(x = 0, y = 0, pch = 21, col = "black", bg = "white", cex = 1.5)
+	
+		# 3.2. eta = theta < 1, 3-eq solution
+			plot.pars <- list(b = 5, d = 1, mu = 1, nu = 1, eta = 0.25, theta = 0.25, beta = .045)
+			lims <- c(0, 100)
+			plot(x = 0, type = "n", xlim = lims, ylim = lims, xaxt = "n", yaxt = "n", ann  = F)
+			abline(v = 0, h = 0, col = rev(c("#CC000077", "#0000CC77")), lwd = 1)
+			abline(v = 2^4, h = 2^4, col = rev(c("#CC000077", "#0000CC77")), lwd = 1)
+			nc(model = bd, x.lim = lims, y.lim = lims, parameters = plot.pars, verbose = FALSE, points = 100, lty = "F3", lwd = 1.25)
+	
+			arrows(50, 50, 70, 50, col = "#CC0000", lwd = 2, length = 0.05)
+			arrows(50, 50, 50, 70, col = "#0000CC", lwd = 2, length = 0.05)
+			arrows(50, 50, 65, 65, col = "#000000", lwd = 2, length = 0.05)
+	
+			arrows(10, 80, 10, 60, col = "#0000CC", lwd = 2, length = 0.05)
+			arrows(10, 80, 30, 80, col = "#CC0000", lwd = 2, length = 0.05)
+			arrows(10, 80, 25, 65, col = "#000000", lwd = 2, length = 0.05)
+	
+			arrows(90, 10, 90, 30, col = "#0000CC", lwd = 2, length = 0.05)
+			arrows(90, 10, 70, 10, col = "#CC0000", lwd = 2, length = 0.05)
+			arrows(90, 10, 75, 25, col = "#000000", lwd = 2, length = 0.05)
+	
+			abline(v = 0, h = 0, col = rev(c("#CC0000", "#0000CC")), lty = "F3", lwd = 1.25)
+	
+			points(x = 0, y = 0, pch = 21, col = "black", bg = "white", cex = 1.5)
+			points(x = 16, y = 0, pch = 21, col = "black", bg = "grey50", cex = 1.5)
+			points(x = 0, y = 16, pch = 21, col = "black", bg = "grey50", cex = 1.5)
+	
+			axis(1, at = 0, labels = 0, las = 1, tick = F, line = -0.7)
+			axis(2, at = 0, labels = F, tck = -0.02)
+			axis(1, at = 0, labels = F, tck = -0.02)
+	
+		# 3.3. eta = theta < 1, 2 internal eq
+			plot.pars <- list(b = 5, d = 1, mu = 1, nu = 1, eta = 0.25, theta = 0.25, beta = .025)
+			lims <- c(0, 120)
+			plot(x = 0, type = "n", xlim = lims, ylim = lims, xaxt = "n", yaxt = "n", ann  = F)
+			abline(v = 0, h = 0, col = rev(c("#CC000077", "#0000CC77")), lwd = 1)
+			abline(v = 2^4, h = 2^4, col = rev(c("#CC000077", "#0000CC77")), lwd = 1)
+			nc(model = bd, x.lim = lims, y.lim = lims, parameters = plot.pars, verbose = FALSE, points = 200, lty = "F3", lwd = 1.25)
+	
+			arrows(5, 5, 17, 5, col = "#CC0000", lwd = 2, length = 0.05)
+			arrows(5, 5, 5, 17, col = "#0000CC", lwd = 2, length = 0.05)
+			arrows(5, 5, 18, 18, col = "#000000", lwd = 2, length = 0.05)
+	
+			arrows(105, 105, 117, 105, col = "#CC0000", lwd = 2, length = 0.05)
+			arrows(105, 105, 105, 117, col = "#0000CC", lwd = 2, length = 0.05)
+			arrows(105, 105, 118, 118, col = "#000000", lwd = 2, length = 0.05)
+	
+			arrows(10, 80, 10, 60, col = "#0000CC", lwd = 2, length = 0.05)
+			arrows(10, 80, 30, 80, col = "#CC0000", lwd = 2, length = 0.05)
+			arrows(10, 80, 25, 65, col = "#000000", lwd = 2, length = 0.05)
+	
+			arrows(90, 10, 90, 30, col = "#0000CC", lwd = 2, length = 0.05)
+			arrows(90, 10, 70, 10, col = "#CC0000", lwd = 2, length = 0.05)
+			arrows(90, 10, 75, 25, col = "#000000", lwd = 2, length = 0.05)
+	
+			arrows(65, 65, 65, 45, col = "#0000CC", lwd = 2, length = 0.05)
+			arrows(65, 65, 45, 65, col = "#CC0000", lwd = 2, length = 0.05)
+			arrows(65, 65, 48, 48, col = "#000000", lwd = 2, length = 0.05)
+	
+			abline(v = 0, h = 0, col = rev(c("#CC0000", "#0000CC")), lty = "F3", lwd = 1.25)
+	
+			points(x = 0, y = 0, pch = 21, col = "black", bg = "white", cex = 1.5)
+			points(x = 16, y = 0, pch = 21, col = "black", bg = "grey50", cex = 1.5)
+			points(x = 0, y = 16, pch = 21, col = "black", bg = "grey50", cex = 1.5)
+			points(x = 35, y = 35, pch = 21, col = "black", bg = "black", cex = 1.5)
+			points(x =  77, y = 77, pch = 21, col = "black", bg = "grey50", cex = 1.5)
+	
+			axis(1, at = 0, labels = 0, las = 1, tick = F, line = -0.7)
+			axis(2, at = 0, labels = F, tck = -0.02)
+			axis(1, at = 0, labels = F, tck = -0.02)
+	
+		# 3.4. eta = theta = 1, unstable
+			plot.pars <- list(b = 5, d = 1, mu = 1, nu = 1, eta = 1, theta = 1, beta = 3)
+			lims <- c(0, 10)
+			plot(x = 0, type = "n", xlim = lims, ylim = lims, xaxt = "n", yaxt = "n", ann  = F)
+			nc(model = bd, x.lim = lims, y.lim = lims, parameters = plot.pars, verbose = FALSE, points = 100, lty = "F3", lwd = 1.25)
+			abline(v = 0, h = 0, col = rev(c("#CC000077", "#0000CC77")), lwd = 1)
+			abline(v = 2, h = 2, col = rev(c("#CC000077", "#0000CC77")), lwd = 1)
+	
+			arrows(4, 4, 5.5, 4, col = "#CC0000", lwd = 2, length = 0.05)
+			arrows(4, 4, 4, 5.5, col = "#0000CC", lwd = 2, length = 0.05)
+			arrows(4, 4, 5.5, 5.5, col = "#000000", lwd = 2, length = 0.05)
+	
+			arrows(1, 8, 2.5, 8, col = "#CC0000", lwd = 2, length = 0.05)
+			arrows(1, 8, 1, 6.5, col = "#0000CC", lwd = 2, length = 0.05)
+			arrows(1, 8, 2.4, 6.6, col = "#000000", lwd = 2, length = 0.05)
+	
+			arrows(8, 1, 6.5, 1, col = "#CC0000", lwd = 2, length = 0.05)
+			arrows(8, 1, 8, 2.5, col = "#0000CC", lwd = 2, length = 0.05)
+			arrows(8, 1, 6.6, 2.4, col = "#000000", lwd = 2, length = 0.05)
+	
+			abline(v = 0, h = 0, col = rev(c("#CC0000", "#0000CC")), lty = "F3", lwd = 1.25)
+	
+			points(x = 0, y = 0, pch = 21, col = "black", bg = "white", cex = 1.5)
+			points(x = 2, y = 0, pch = 21, col = "black", bg = "grey50", cex = 1.5)
+			points(x = 0, y = 2, pch = 21, col = "black", bg = "grey50", cex = 1.5)
+	
+			axis(2, at = 0, labels = 0, las = 1, tick = F, line = -0.6)
+			axis(1, at = 0, labels = 0, las = 1, tick = F, line = -0.7)
+			axis(2, at = 0, labels = F, tck = -0.02)
+			axis(1, at = 0, labels = F, tck = -0.02)
+	
+		# 3.5. eta = theta = 1, stable
+			plot.pars <- list(b = 5, d = 1, mu = 1, nu = 1, eta = 1, theta = 1, beta = 1.15)
+			lims <- c(0, 10)
+			plot(x = 0, type = "n", xlim = lims, ylim = lims, xaxt = "n", yaxt = "n", ann  = F)
+			nc(model = bd, x.lim = lims, y.lim = lims, parameters = plot.pars, verbose = FALSE, points = 100, lty = "F3", lwd = 1.25)
+	
+			abline(v = 0, h = 0, col = rev(c("#CC000077", "#0000CC77")), lwd = 1)
+			abline(v = 2, h = 2, col = rev(c("#CC000077", "#0000CC77")), lwd = 1)
+	
+			arrows(.6, .6, 2.1, 0.6, col = "#CC0000", lwd = 2, length = 0.05)
+			arrows(.6, .6, .6, 2.1, col = "#0000CC", lwd = 2, length = 0.05)
+			arrows(.6, .6, 2.2, 2.2, col = "#000000", lwd = 2, length = 0.05)
+	
+			arrows(1, 7, 2.5, 7, col = "#CC0000", lwd = 2, length = 0.05)
+			arrows(1, 7, 1, 5.5, col = "#0000CC", lwd = 2, length = 0.05)
+			arrows(1, 7, 2.4, 5.6, col = "#000000", lwd = 2, length = 0.05)
+	
+			arrows(7, 1, 5.5, 1, col = "#CC0000", lwd = 2, length = 0.05)
+			arrows(7, 1, 7, 2.5, col = "#0000CC", lwd = 2, length = 0.05)
+			arrows(7, 1, 5.6, 2.4, col = "#000000", lwd = 2, length = 0.05)
+	
+			arrows(10, 10, 8.5, 10, col = "#CC0000", lwd = 2, length = 0.05)
+			arrows(10, 10, 10, 8.5, col = "#0000CC", lwd = 2, length = 0.05)
+			arrows(10, 10, 8.5, 8.5, col = "#000000", lwd = 2, length = 0.05)
+	
+			abline(v = 0, h = 0, col = rev(c("#CC0000", "#0000CC")), lty = "F3", lwd = 1.25)
+	
+			points(x = 0, y = 0, pch = 21, col = "black", bg = "white", cex = 1.5)
+			points(x = 2, y = 0, pch = 21, col = "black", bg = "grey50", cex = 1.5)
+			points(x = 0, y = 2, pch = 21, col = "black", bg = "grey50", cex = 1.5)
+			points(x =  4.705882, y = 4.705882, pch = 21, col = "black", bg = "black", cex = 1.5)
+	
+			axis(1, at = 0, labels = 0, las = 1, tick = F, line = -0.7)
+			axis(2, at = 0, labels = F, tck = -0.02)
+			axis(1, at = 0, labels = F, tck = -0.02)
+	
+		# 3.6. eta = theta > 1, stable
+			plot.pars <- list(b = 10, d = 1, mu = 1, nu = 1, eta = 4, theta = 4, beta = 100)
+			lims <- c(0, 10)
+			plot(x = 0, type = "n", xlim = lims, ylim = lims, xaxt = "n", yaxt = "n", ann  = F)
+			nc(model = bd, x.lim = lims, y.lim = lims, parameters = plot.pars, verbose = FALSE, points = 100, lty = "F3", lwd = 1.25)
+			abline(v = 0, h = 0, col = rev(c("#CC000077", "#0000CC77")), lwd = 1)
+			abline(v = 4.5^0.25, h = 4.5^0.25, col = rev(c("#CC000077", "#0000CC77")), lwd = 1)
+	
+			arrows(.6, .6, 2.1, 0.6, col = "#CC0000", lwd = 2, length = 0.05)
+			arrows(.6, .6, .6, 2.1, col = "#0000CC", lwd = 2, length = 0.05)
+			arrows(.6, .6, 2.2, 2.2, col = "#000000", lwd = 2, length = 0.05)
+	
+			arrows(1, 7, 2.5, 7, col = "#CC0000", lwd = 2, length = 0.05)
+			arrows(1, 7, 1, 5.5, col = "#0000CC", lwd = 2, length = 0.05)
+			arrows(1, 7, 2.4, 5.6, col = "#000000", lwd = 2, length = 0.05)
+	
+			arrows(7, 1, 5.5, 1, col = "#CC0000", lwd = 2, length = 0.05)
+			arrows(7, 1, 7, 2.5, col = "#0000CC", lwd = 2, length = 0.05)
+			arrows(7, 1, 5.6, 2.4, col = "#000000", lwd = 2, length = 0.05)
+	
+			arrows(10, 10, 8.5, 10, col = "#CC0000", lwd = 2, length = 0.05)
+			arrows(10, 10, 10, 8.5, col = "#0000CC", lwd = 2, length = 0.05)
+			arrows(10, 10, 8.5, 8.5, col = "#000000", lwd = 2, length = 0.05)
+	
+			abline(v = 0, h = 0, col = rev(c("#CC0000", "#0000CC")), lty = "F3", lwd = 1.25)
+	
+			points(x = 0, y = 0, pch = 21, col = "black", bg = "white", cex = 1.5)
+			points(x = 4.5^0.25, y = 0, pch = 21, col = "black", bg = "grey50", cex = 1.5)
+			points(x = 0, y = 4.5^0.25, pch = 21, col = "black", bg = "grey50", cex = 1.5)
+			points(x =  3.75, y = 3.75, pch = 21, col = "black", bg = "black", cex = 1.5)
+	
+			axis(1, at = 0, labels = 0, las = 1, tick = F, line = -0.7)
+			axis(2, at = 0, labels = F, tck = -0.02)
+			axis(1, at = 0, labels = F, tck = -0.02)
+	
+		if (!is.na(fig.wd) == T) { dev.off() }
 
 # 5. Figure 5: linear mutaulism benefit
 	# 5.1. Load data and package(s)
