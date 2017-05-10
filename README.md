@@ -3,7 +3,7 @@ Repository for code from
 
 *Population dynamics of mutualism and intraspecific density dependence: how θ-logistic-like density dependence affects mutualistic positive feedback*
 
-by Christopher M. Moore (me), Sam A. Catella, and Karen C. Abbott
+by Christopher M. Moore (me), Samantha A. Catella, and Karen C. Abbott
 
 There are two files:
 
